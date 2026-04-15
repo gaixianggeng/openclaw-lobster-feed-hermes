@@ -62,6 +62,12 @@ bash ./install.sh
 curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh | bash
 ```
 
+### CDN single-file entrypoint (for constrained China-network environments)
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh | bash
+```
+
 ### Explicit source directory
 
 ```bash
@@ -134,6 +140,20 @@ Official installer path:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
 export PATH="$HOME/.local/bin:$PATH"
+```
+
+Built-in fallback behavior in this repo's installer:
+
+- first try GitHub Raw
+- if that fails, try jsDelivr automatically
+- operators can override the primary source with `HERMES_INSTALL_URL`
+- operators can append extra candidates with `HERMES_INSTALL_FALLBACK_URLS`
+
+Example overrides:
+
+```bash
+HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
+HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
 ```
 
 If `hermes` is still not on `PATH`, refresh the shell and verify again:
@@ -229,7 +249,7 @@ Keep these limits explicit in any user-facing distribution:
 1. not every OpenClaw secret can be imported automatically
 2. `source: "file"` and `source: "exec"` secret refs usually require manual follow-up
 3. WhatsApp-style pairings are not seamlessly portable
-4. if the machine cannot reach `raw.githubusercontent.com`, the official Hermes installer step may fail and require a manual fallback
+4. if the machine cannot reach `raw.githubusercontent.com`, this repo's installer will try the built-in jsDelivr fallback next; fully locked-down environments may still require an approved internal mirror or a manual fallback
 5. imported skills may require a new Hermes session before they become visible
 
 ---

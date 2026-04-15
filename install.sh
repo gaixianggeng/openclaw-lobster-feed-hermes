@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HERMES_INSTALL_URL="https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh"
+HERMES_INSTALL_URL_DEFAULT="https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh"
+HERMES_INSTALL_FALLBACK_URLS_DEFAULT="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh"
 RAW_INSTALL_URL="https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh"
+RAW_INSTALL_URL_CDN="https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh"
 TOTAL_STEPS=5
 
 log() {
@@ -37,6 +39,63 @@ die() {
 show_source_override_hint() {
   echo "        本地脚本：OPENCLAW_DIR=/path/to/.openclaw bash ./install.sh"
   echo "        Raw 单文件：OPENCLAW_DIR=/path/to/.openclaw bash -c \"\$(curl -fsSL $RAW_INSTALL_URL)\""
+  echo "        CDN 单文件：OPENCLAW_DIR=/path/to/.openclaw bash -c \"\$(curl -fsSL $RAW_INSTALL_URL_CDN)\""
+}
+
+show_network_fallback_hint() {
+  echo "        可强制指定 Hermes 安装源：HERMES_INSTALL_URL=<url> bash ./install.sh"
+  echo "        可追加候选源：HERMES_INSTALL_FALLBACK_URLS=\"<url1> <url2>\" bash ./install.sh"
+  echo "        若 GitHub Raw 受限，可直接走 CDN 单文件：bash -c \"\$(curl -fsSL $RAW_INSTALL_URL_CDN)\""
+}
+
+run_remote_script() {
+  local url="$1"
+  local tmp_script
+  tmp_script="$(mktemp)"
+
+  if ! curl -fsSL --connect-timeout 15 --retry 2 --retry-delay 1 -o "$tmp_script" "$url"; then
+    rm -f "$tmp_script"
+    return 1
+  fi
+
+  if ! bash "$tmp_script"; then
+    rm -f "$tmp_script"
+    return 1
+  fi
+
+  rm -f "$tmp_script"
+  return 0
+}
+
+install_hermes_with_fallback() {
+  local primary_url="${HERMES_INSTALL_URL:-$HERMES_INSTALL_URL_DEFAULT}"
+  local fallback_urls="${HERMES_INSTALL_FALLBACK_URLS:-$HERMES_INSTALL_FALLBACK_URLS_DEFAULT}"
+  local url
+  local index=1
+
+  info "Hermes 安装源候选列表："
+  info "  $index) $primary_url"
+  index=$((index + 1))
+  for url in $fallback_urls; do
+    [ "$url" = "$primary_url" ] && continue
+    info "  $index) $url"
+    index=$((index + 1))
+  done
+
+  info "尝试安装源：$primary_url"
+  if run_remote_script "$primary_url"; then
+    return 0
+  fi
+
+  for url in $fallback_urls; do
+    [ "$url" = "$primary_url" ] && continue
+    warn "主安装源失败，尝试 fallback：$url"
+    if run_remote_script "$url"; then
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 find_openclaw_dir() {
@@ -91,9 +150,10 @@ else
   if ! command -v curl >/dev/null 2>&1; then
     die "未检测到 curl，无法拉取 Hermes 官方安装器。请先安装 curl 后重试。"
   fi
-  if ! curl -fsSL "$HERMES_INSTALL_URL" | bash; then
+  if ! install_hermes_with_fallback; then
     error "Hermes 官方安装器执行失败。"
-    error "若当前网络无法访问 raw.githubusercontent.com，请稍后重试或改走手动安装 fallback。"
+    error "已依次尝试默认源与 fallback 源；若当前网络无法访问 raw.githubusercontent.com，可继续改用 CDN 或手动安装。"
+    show_network_fallback_hint
     exit 1
   fi
   export PATH="$HOME/.local/bin:$PATH"

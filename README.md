@@ -63,6 +63,12 @@ bash ./install.sh
 curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh | bash
 ```
 
+### Option C — use the CDN entrypoint when GitHub Raw is slow or blocked
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh | bash
+```
+
 If OpenClaw lives somewhere else:
 
 ```bash
@@ -182,6 +188,25 @@ Before using this as a team-facing or customer-facing distribution entrypoint, k
 
 ---
 
+## China-network fallback
+
+The installer now tries the Hermes official GitHub Raw installer first, then automatically falls back to jsDelivr if the primary download fails.
+
+You can also steer the install source explicitly:
+
+```bash
+HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
+HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
+```
+
+If you want the repository entrypoint itself to avoid GitHub Raw, use the CDN variant:
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh)"
+```
+
+---
+
 ## Known limits
 
 Because this uses Hermes’ official migration path, some limits still apply:
@@ -189,7 +214,7 @@ Because this uses Hermes’ official migration path, some limits still apply:
 1. not every OpenClaw secret can be imported automatically
 2. `source: "file"` and `source: "exec"` secret refs usually need manual follow-up
 3. WhatsApp-style pairings are not seamlessly portable
-4. if the target machine cannot reach `raw.githubusercontent.com`, the Hermes installer step may fail and require the manual fallback path
+4. if the target machine cannot reach `raw.githubusercontent.com`, the script will try the built-in jsDelivr fallback next; fully locked-down environments may still require an approved internal mirror or manual install path
 
 ---
 

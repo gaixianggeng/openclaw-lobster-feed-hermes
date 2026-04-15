@@ -63,6 +63,12 @@ bash ./install.sh
 curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh | bash
 ```
 
+### 方式 C：GitHub Raw 慢或被拦截时，改走 CDN 单文件入口
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh | bash
+```
+
 如果 OpenClaw 不在默认路径：
 
 ```bash
@@ -184,6 +190,25 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## 中国网络环境 fallback
+
+安装脚本现在会先尝试 Hermes 官方 GitHub Raw 安装器；如果主下载失败，会自动继续尝试 jsDelivr fallback。
+
+如果你需要显式指定安装源，也可以这样运行：
+
+```bash
+HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
+HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
+```
+
+如果连本仓库自己的 Raw 单文件入口也不稳定，可以直接改走 CDN 版本：
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh)"
+```
+
+---
+
 ## 已知限制
 
 因为它复用的是 Hermes 官方迁移路径，所以仍然有这些边界：
@@ -191,7 +216,7 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 1. 不是所有 OpenClaw secret 都能自动导入
 2. `source: "file"` 和 `source: "exec"` 这类 secret refs 通常需要手工补处理
 3. 像 WhatsApp 这类 pairing 关系不能无缝平移
-4. 如果目标机器访问不了 `raw.githubusercontent.com`，Hermes 官方安装器阶段可能失败，需要改走手动安装 fallback
+4. 如果目标机器访问不了 `raw.githubusercontent.com`，脚本会先尝试内置的 jsDelivr fallback；在更严格的网络环境里，仍可能需要改走企业内镜像或手动安装路径
 
 ---
 
