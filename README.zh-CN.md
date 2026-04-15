@@ -71,6 +71,16 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## Demo
+
+如果你想先看安装器的交互风格、再决定是否在真实 OpenClaw 目录上执行，可以先看这份已捕获的 CLI 输出：
+
+- [`docs/demo-cli-invalid-source.md`](./docs/demo-cli-invalid-source.md)
+
+这个 demo 故意传入了一个不存在的 `OPENCLAW_DIR`，用于展示分步骤输出和报错提示，同时避免对真实迁移环境产生副作用。
+
+---
+
 ## 示例场景
 
 ### 1. 在已有 OpenClaw 工作机上原地升级
@@ -193,6 +203,8 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 ├── README.zh-CN.md
 ├── SKILL.md
 ├── install.sh
+├── docs/
+│   └── demo-cli-invalid-source.md
 ├── scripts/
 │   └── openclaw_lobster_feed_install.sh
 └── LICENSE

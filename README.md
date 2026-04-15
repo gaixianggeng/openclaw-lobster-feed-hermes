@@ -71,6 +71,16 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## Demo
+
+Want to preview the installer UX before touching a real OpenClaw directory? See the captured CLI transcript:
+
+- [`docs/demo-cli-invalid-source.md`](./docs/demo-cli-invalid-source.md)
+
+This demo intentionally uses a missing `OPENCLAW_DIR` so the repository can show the step-based output and error guidance without performing a real migration.
+
+---
+
 ## Example scenarios
 
 ### 1. Upgrade an existing OpenClaw workstation in place
@@ -191,6 +201,8 @@ Because this uses Hermes’ official migration path, some limits still apply:
 ├── README.zh-CN.md
 ├── SKILL.md
 ├── install.sh
+├── docs/
+│   └── demo-cli-invalid-source.md
 ├── scripts/
 │   └── openclaw_lobster_feed_install.sh
 └── LICENSE
