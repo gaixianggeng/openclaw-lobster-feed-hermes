@@ -71,6 +71,45 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## Example scenarios
+
+### 1. Upgrade an existing OpenClaw workstation in place
+
+Use this when the machine already has OpenClaw in a standard directory and you want the fastest path to Hermes:
+
+```bash
+bash ./install.sh
+```
+
+Expected flow:
+
+- auto-detect `~/.openclaw`, `~/.clawdbot`, or `~/.moltbot`
+- install Hermes if missing
+- migrate with the `full` preset
+- finish with `hermes doctor`
+
+### 2. Migrate from a non-standard source directory
+
+Use this when the OpenClaw data lives on an external disk, another home directory, or a manually renamed folder:
+
+```bash
+OPENCLAW_DIR=/data/team-a/.openclaw bash ./install.sh
+```
+
+This keeps the migration source explicit and avoids depending on auto-detection.
+
+### 3. Run the migration from a support or onboarding playbook
+
+Use the raw entrypoint when you want a copy-pasteable command for internal docs, customer onboarding, or operator handoff:
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh)"
+```
+
+This is the lowest-friction way to distribute the workflow without asking the user to clone the repository first.
+
+---
+
 ## What the script does
 
 The default flow is:

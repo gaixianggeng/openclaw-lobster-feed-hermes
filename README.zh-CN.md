@@ -71,6 +71,45 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## 示例场景
+
+### 1. 在已有 OpenClaw 工作机上原地升级
+
+适用于机器已经在标准目录里安装了 OpenClaw，你只想用最低操作成本切到 Hermes：
+
+```bash
+bash ./install.sh
+```
+
+预期流程：
+
+- 自动探测 `~/.openclaw`、`~/.clawdbot` 或 `~/.moltbot`
+- 如果 Hermes 缺失则先安装
+- 用 `full` preset 执行迁移
+- 最后运行 `hermes doctor`
+
+### 2. 从非标准目录迁移
+
+适用于 OpenClaw 数据放在外接磁盘、其他 home 目录，或手动改名过的目录：
+
+```bash
+OPENCLAW_DIR=/data/team-a/.openclaw bash ./install.sh
+```
+
+这样可以显式指定迁移来源，不依赖自动探测。
+
+### 3. 作为运维 / 客服 / onboarding 文档里的复制即用命令
+
+适用于你要把这条迁移流程分发到内部 SOP、客户接入文档或交接手册里：
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh)"
+```
+
+这种方式分发成本最低，不要求用户先 clone 仓库。
+
+---
+
 ## 脚本会做什么
 
 默认流程是：
