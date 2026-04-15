@@ -1,0 +1,187 @@
+# openclaw-lobster-feed-hermes
+
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
+**给已经安装了 OpenClaw 的机器，一键安装 Hermes，并尽量自动复用可迁移资产。**
+
+这个项目提供的是一条面向分发的升级路径，不只是一个临时脚本：
+
+- 安装 Hermes
+- 尽量复用兼容的模型 / provider 配置
+- 导入支持的密钥、记忆、人格、skills、allowlist
+- 最后用 `hermes doctor` 做验收
+
+它的目标是把“从 OpenClaw 切到 Hermes”做成一个**可分发、可复用、可产品化**的迁移包。
+
+---
+
+## 仓库包含什么
+
+这个仓库包含两个交付物：
+
+1. **可发布的 Hermes skill** —— `SKILL.md`
+2. **可独立运行的一键脚本** —— `install.sh`
+
+其中 `install.sh` 是单文件入口，可以直接通过 GitHub Raw 执行，不要求用户先 clone 仓库。
+
+---
+
+## 适合谁
+
+适合这类用户：
+
+- 已经装过 OpenClaw
+- 想快速切到 Hermes
+- 希望尽量保留已有模型 / provider 配置
+- 不想手动从零重建环境
+
+脚本会自动探测这些常见目录：
+
+- `~/.openclaw`
+- `~/.clawdbot`
+- `~/.moltbot`
+
+也支持手动指定路径：
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash ./install.sh
+```
+
+---
+
+## 快速开始
+
+### 方式 A：直接运行仓库里的脚本
+
+```bash
+bash ./install.sh
+```
+
+### 方式 B：直接运行 GitHub Raw 单文件脚本
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh | bash
+```
+
+如果 OpenClaw 不在默认路径：
+
+```bash
+OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh)"
+```
+
+---
+
+## 脚本会做什么
+
+默认流程是：
+
+1. 检查 `git` 是否存在
+2. 探测 OpenClaw 目录
+3. 如果 Hermes 未安装，则先安装 Hermes
+4. 执行：
+   ```bash
+   hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes
+   ```
+5. 执行：
+   ```bash
+   hermes doctor
+   ```
+
+---
+
+## 默认产品策略
+
+这个包默认选择的是“低摩擦但不过度冒进”的迁移策略：
+
+- **默认迁移模式：** `full`
+- **默认行为：** `--yes`
+- **不会默认加：** `--overwrite`
+- **始终优先：** 显式 `--source`
+- **没有执行：** `hermes doctor` 不算完成
+
+也就是说，它追求的是：
+
+> **先尽快跑通，但不静默覆盖用户已有的 Hermes 数据。**
+
+---
+
+## 可能复用哪些东西
+
+这个仓库依赖 Hermes 官方 OpenClaw 迁移能力，通常会尽量迁移这些兼容内容：
+
+- 默认模型配置
+- 自定义 provider
+- allowlist 内兼容 API keys / secrets
+- `SOUL.md`
+- `MEMORY.md`
+- `USER.md`
+- OpenClaw skills
+- command allowlists
+- 部分 messaging settings
+- TTS assets
+
+最终以 Hermes 的迁移报告为准，报告才是实际结果的唯一依据。
+
+---
+
+## 已知限制
+
+因为它复用的是 Hermes 官方迁移路径，所以仍然有这些边界：
+
+1. 不是所有 OpenClaw secret 都能自动导入
+2. `source: "file"` 和 `source: "exec"` 这类 secret refs 通常需要手工补处理
+3. 像 WhatsApp 这类 pairing 关系不能无缝平移
+4. 如果目标机器访问不了 `raw.githubusercontent.com`，Hermes 官方安装器阶段可能失败，需要改走手动安装 fallback
+
+---
+
+## 仓库结构
+
+```text
+.
+├── README.md
+├── README.zh-CN.md
+├── SKILL.md
+├── install.sh
+├── scripts/
+│   └── openclaw_lobster_feed_install.sh
+└── LICENSE
+```
+
+---
+
+## 作为 Hermes skill 使用
+
+如果你要把它当作 skill 源分发：
+
+- skill 文件：`SKILL.md`
+- 单文件脚本：`install.sh`
+- 内部辅助脚本：`scripts/openclaw_lobster_feed_install.sh`
+
+skill 名称：
+
+- `openclaw-lobster-feed-hermes`
+
+---
+
+## 验收建议
+
+建议迁移完成后至少执行：
+
+```bash
+hermes --version
+hermes doctor
+```
+
+如果你还想继续核验模型 / provider：
+
+```bash
+hermes model
+hermes
+```
+
+---
+
+## License
+
+MIT
