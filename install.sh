@@ -25,6 +25,10 @@ error() {
   log ERROR "$@" >&2
 }
 
+success() {
+  log DONE "$@"
+}
+
 step() {
   local num="$1"
   shift
@@ -37,6 +41,7 @@ die() {
 }
 
 show_source_override_hint() {
+  echo "        默认会自动探测：~/.openclaw ~/.clawdbot ~/.moltbot"
   echo "        本地脚本：OPENCLAW_DIR=/path/to/.openclaw bash ./install.sh"
   echo "        Raw 单文件：OPENCLAW_DIR=/path/to/.openclaw bash -c \"\$(curl -fsSL $RAW_INSTALL_URL)\""
   echo "        CDN 单文件：OPENCLAW_DIR=/path/to/.openclaw bash -c \"\$(curl -fsSL $RAW_INSTALL_URL_CDN)\""
@@ -46,6 +51,42 @@ show_network_fallback_hint() {
   echo "        可强制指定 Hermes 安装源：HERMES_INSTALL_URL=<url> bash ./install.sh"
   echo "        可追加候选源：HERMES_INSTALL_FALLBACK_URLS=\"<url1> <url2>\" bash ./install.sh"
   echo "        若 GitHub Raw 受限，可直接走 CDN 单文件：bash -c \"\$(curl -fsSL $RAW_INSTALL_URL_CDN)\""
+}
+
+show_path_refresh_hint() {
+  echo "        source ~/.bashrc    # 或 source ~/.zshrc"
+  echo "        export PATH=\"$HOME/.local/bin:$PATH\""
+}
+
+show_migration_failure_hint() {
+  local source_dir="$1"
+  echo "        可先确认源目录是否可读：ls \"$source_dir\""
+  echo "        可单独确认 Hermes 是否可用：hermes --version"
+  echo "        可手动重试迁移：hermes claw migrate --source \"$source_dir\" --preset full --yes"
+}
+
+show_doctor_followup_hint() {
+  echo "       排查建议："
+  echo "       1. 根据上方 doctor 输出补齐 provider / model / env 配置"
+  echo "       2. 如需检查当前配置目录：hermes config path"
+  echo "       3. 如需重新选择模型：hermes model"
+  echo "       4. 完成后再次执行：hermes doctor"
+}
+
+show_completion_summary() {
+  local source_dir="$1"
+  local doctor_rc="$2"
+  echo "[DONE] 一键安装 + 迁移流程已执行完成。"
+  echo "       OpenClaw 来源：$source_dir"
+  if [ "$doctor_rc" -eq 0 ]; then
+    echo "       验收状态：hermes doctor 通过"
+  else
+    echo "       验收状态：hermes doctor 返回非 0（exit=$doctor_rc），需继续补配置"
+  fi
+  echo "       下一步建议："
+  echo "       1. hermes"
+  echo "       2. 如需检查模型选择：hermes model"
+  echo "       3. 如需复查环境：hermes doctor"
 }
 
 run_remote_script() {
@@ -157,15 +198,16 @@ else
     exit 1
   fi
   export PATH="$HOME/.local/bin:$PATH"
+  success "Hermes 官方安装器执行完成。"
 fi
 
 if ! command -v hermes >/dev/null 2>&1; then
   error "安装后仍找不到 hermes。请先刷新 shell 环境后重试："
-  echo "        source ~/.bashrc    # 或 source ~/.zshrc"
-  echo "        export PATH=\"$HOME/.local/bin:$PATH\""
+  show_path_refresh_hint
   exit 1
 fi
 info "Hermes version: $(hermes --version)"
+success "已确认 hermes 可执行。"
 
 step 4 "执行兼容迁移"
 info "迁移来源：$OPENCLAW_DIR"
@@ -173,8 +215,10 @@ info "执行命令：hermes claw migrate --source \"$OPENCLAW_DIR\" --preset ful
 if ! hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes; then
   error "迁移命令执行失败；上方输出是排查依据。"
   error "本脚本默认未加 --overwrite，已有 Hermes 数据不会被静默覆盖。"
+  show_migration_failure_hint "$OPENCLAW_DIR"
   exit 1
 fi
+success "迁移命令执行完成。"
 
 step 5 "运行验收"
 info "执行命令：hermes doctor"
@@ -184,13 +228,10 @@ doctor_rc=$?
 set -e
 if [ "$doctor_rc" -ne 0 ]; then
   warn "hermes doctor 返回非 0（exit=$doctor_rc）；请根据上方输出继续补配置。"
+  show_doctor_followup_hint
 else
-  info "hermes doctor 通过。"
+  success "hermes doctor 通过。"
 fi
 
 echo
-echo "[DONE] 一键安装 + 迁移流程已执行完成。"
-echo "       下一步建议："
-echo "       1. hermes"
-echo "       2. 如需检查模型选择：hermes model"
-echo "       3. 如需复查环境：hermes doctor"
+show_completion_summary "$OPENCLAW_DIR" "$doctor_rc"
