@@ -5,7 +5,7 @@
 这个仓库包含两部分：
 
 1. **可发布的 Hermes skill**：`SKILL.md`
-2. **可直接执行的一键脚本**：`scripts/openclaw_lobster_feed_install.sh`
+2. **可直接执行的一键脚本**：`install.sh`
 
 目标不是“从零手配 Hermes”，而是：
 
@@ -41,8 +41,16 @@ OPENCLAW_DIR=/path/to/.openclaw bash ./install.sh
 
 ## 一键跑法
 
+### 方式 A：直接跑仓库里的脚本
+
 ```bash
 bash ./install.sh
+```
+
+### 方式 B：直接跑 GitHub Raw 单文件脚本
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh | bash
 ```
 
 如果 OpenClaw 不在默认目录：
@@ -113,7 +121,8 @@ OPENCLAW_DIR=/path/to/.openclaw bash ./install.sh
 如果你想把这个仓库当成可分发的 skill 源：
 
 - 主 skill 文件：`SKILL.md`
-- 脚本文件：`scripts/openclaw_lobster_feed_install.sh`
+- 备用脚本：`scripts/openclaw_lobster_feed_install.sh`
+- 单文件入口：`install.sh`
 
 skill 名称：
 
