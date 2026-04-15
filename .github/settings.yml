@@ -1,0 +1,13 @@
+repository:
+  name: openclaw-lobster-feed-hermes
+  description: Distribution-ready one-click installer and skill for upgrading OpenClaw machines to Hermes with explicit migration defaults and validation.
+  default_branch: main
+  topics:
+    - hermes
+    - openclaw
+    - migration
+    - installer
+    - bootstrap
+    - skill
+    - onboarding
+    - distribution
