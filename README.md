@@ -161,6 +161,17 @@ The migration report remains the source of truth for what actually moved.
 
 ---
 
+## Security notes
+
+Before using this as a team-facing or customer-facing distribution entrypoint, keep these safety rules explicit:
+
+1. **Review the script before piping it into `bash`.** For production onboarding docs, prefer linking the repository, pinning a reviewed commit, or vendoring the script internally.
+2. **Run the migration with the right account and host boundary.** The script reads from an existing OpenClaw directory and may expose provider configuration, memory files, and compatible secrets to the current operator account.
+3. **Treat migration output and follow-up files as sensitive.** Do not paste logs, config snippets, or migration reports into tickets, chats, or commits if they may contain provider URLs, tokens, or personal memory content.
+4. **Re-check secrets after migration.** Hermes can reuse supported secrets, but not every OpenClaw secret source is portable; validate imported credentials and rotate them if the original machine or operator boundary should no longer retain access.
+
+---
+
 ## Known limits
 
 Because this uses Hermes’ official migration path, some limits still apply:

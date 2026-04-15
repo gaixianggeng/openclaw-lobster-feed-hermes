@@ -163,6 +163,17 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 ---
 
+## 安全说明
+
+如果你要把它当作团队内部或面向客户的分发入口，建议把下面这些安全前提写清楚：
+
+1. **先审脚本，再决定是否 `curl | bash`。** 用在正式 onboarding / SOP 时，优先给仓库链接、固定已审核 commit，或者把脚本纳入你自己的内部分发源。
+2. **在正确的账号和机器边界内执行迁移。** 脚本会读取现有 OpenClaw 目录，当前操作者账号可能接触到 provider 配置、记忆文件以及兼容的 secrets。
+3. **把迁移输出和后续排查文件都当作敏感信息处理。** 如果日志、配置片段或迁移报告里可能带有 provider URL、token 或个人记忆内容，就不要直接贴到工单、聊天记录或 git 提交里。
+4. **迁移后重新核验 secrets。** Hermes 会尽量复用支持的 secrets，但不是所有 OpenClaw secret source 都能无损迁移；如果原机器或原操作者本应失去访问权，请补做校验与轮换。
+
+---
+
 ## 已知限制
 
 因为它复用的是 Hermes 官方迁移路径，所以仍然有这些边界：
