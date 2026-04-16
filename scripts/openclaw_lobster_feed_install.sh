@@ -3,6 +3,7 @@ set -euo pipefail
 
 HERMES_INSTALL_URL_DEFAULT="https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh"
 HERMES_INSTALL_FALLBACK_URLS_DEFAULT="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh"
+HERMES_INSTALL_ARGS_DEFAULT="--skip-setup"
 RAW_INSTALL_URL="https://raw.githubusercontent.com/gaixianggeng/openclaw-lobster-feed-hermes/main/install.sh"
 RAW_INSTALL_URL_CDN="https://cdn.jsdelivr.net/gh/gaixianggeng/openclaw-lobster-feed-hermes@main/install.sh"
 TOTAL_STEPS=5
@@ -45,6 +46,7 @@ show_source_override_hint() {
 show_network_fallback_hint() {
   echo "        可强制指定 Hermes 安装源：HERMES_INSTALL_URL=<url> bash ./install.sh"
   echo "        可追加候选源：HERMES_INSTALL_FALLBACK_URLS=\"<url1> <url2>\" bash ./install.sh"
+  echo "        可覆盖 Hermes 安装参数：HERMES_INSTALL_ARGS=\"--skip-setup --branch main\" bash ./install.sh"
   echo "        若 GitHub Raw 受限，可直接走 CDN 单文件：bash -c \"\$(curl -fsSL $RAW_INSTALL_URL_CDN)\""
 }
 
@@ -58,7 +60,14 @@ run_remote_script() {
     return 1
   fi
 
-  if ! bash "$tmp_script"; then
+  if [ "${HERMES_INSTALL_ARGS+x}" = "x" ]; then
+    # Intentionally allow simple shell-style splitting for installer flags.
+    # Example: HERMES_INSTALL_ARGS="--skip-setup --branch main"
+    if ! bash "$tmp_script" $HERMES_INSTALL_ARGS; then
+      rm -f "$tmp_script"
+      return 1
+    fi
+  elif ! bash "$tmp_script" $HERMES_INSTALL_ARGS_DEFAULT; then
     rm -f "$tmp_script"
     return 1
   fi
@@ -70,6 +79,7 @@ run_remote_script() {
 install_hermes_with_fallback() {
   local primary_url="${HERMES_INSTALL_URL:-$HERMES_INSTALL_URL_DEFAULT}"
   local fallback_urls="${HERMES_INSTALL_FALLBACK_URLS:-$HERMES_INSTALL_FALLBACK_URLS_DEFAULT}"
+  local install_args="${HERMES_INSTALL_ARGS-$HERMES_INSTALL_ARGS_DEFAULT}"
   local url
   local index=1
 
@@ -81,6 +91,7 @@ install_hermes_with_fallback() {
     info "  $index) $url"
     index=$((index + 1))
   done
+  info "Hermes 安装参数：${install_args:-<empty>}"
 
   info "尝试安装源：$primary_url"
   if run_remote_script "$primary_url"; then
@@ -141,6 +152,7 @@ else
 fi
 
 export PATH="$HOME/.local/bin:$PATH"
+hermes_just_installed=0
 
 step 3 "确保 hermes 可执行"
 if command -v hermes >/dev/null 2>&1; then
@@ -157,6 +169,7 @@ else
     exit 1
   fi
   export PATH="$HOME/.local/bin:$PATH"
+  hermes_just_installed=1
 fi
 
 if ! command -v hermes >/dev/null 2>&1; then
@@ -168,12 +181,40 @@ fi
 info "Hermes version: $(hermes --version)"
 
 step 4 "执行兼容迁移"
+should_overwrite=0
+case "${HERMES_MIGRATE_OVERWRITE:-auto}" in
+  auto)
+    if [ "$hermes_just_installed" -eq 1 ]; then
+      should_overwrite=1
+    fi
+    ;;
+  1|true|TRUE|yes|YES|on|ON)
+    should_overwrite=1
+    ;;
+  0|false|FALSE|no|NO|off|OFF)
+    should_overwrite=0
+    ;;
+  *)
+    die "HERMES_MIGRATE_OVERWRITE 只能是 auto/true/false，当前值：${HERMES_MIGRATE_OVERWRITE}"
+    ;;
+esac
+
 info "迁移来源：$OPENCLAW_DIR"
-info "执行命令：hermes claw migrate --source \"$OPENCLAW_DIR\" --preset full --yes"
-if ! hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes; then
-  error "迁移命令执行失败；上方输出是排查依据。"
-  error "本脚本默认未加 --overwrite，已有 Hermes 数据不会被静默覆盖。"
-  exit 1
+if [ "$should_overwrite" -eq 1 ]; then
+  info "迁移覆盖策略：启用 --overwrite（用于新装 Hermes 的默认模板，或由 HERMES_MIGRATE_OVERWRITE 显式开启）"
+  info "执行命令：hermes claw migrate --source \"$OPENCLAW_DIR\" --preset full --yes --overwrite"
+  if ! hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes --overwrite; then
+    error "迁移命令执行失败；上方输出是排查依据。"
+    exit 1
+  fi
+else
+  info "迁移覆盖策略：不覆盖已有 Hermes 数据"
+  info "执行命令：hermes claw migrate --source \"$OPENCLAW_DIR\" --preset full --yes"
+  if ! hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes; then
+    error "迁移命令执行失败；上方输出是排查依据。"
+    error "本脚本默认未加 --overwrite，已有 Hermes 数据不会被静默覆盖。"
+    exit 1
+  fi
 fi
 
 step 5 "运行验收"

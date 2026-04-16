@@ -133,10 +133,12 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 1. 检查 `git` 是否存在
 2. 探测 OpenClaw 目录
 3. 如果 Hermes 未安装，则先安装 Hermes
+   - 默认给 Hermes 官方安装器传 `--skip-setup`，避免 `curl | bash` 这类非交互命令卡在 setup wizard
 4. 执行：
    ```bash
    hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes
    ```
+   如果 Hermes 是本脚本刚刚新装的，迁移时会自动加 `--overwrite`，让 OpenClaw 的模型 / provider 配置覆盖 Hermes 默认模板；如果脚本开始前已经有 Hermes，则默认仍然不覆盖已有 Hermes 数据，除非显式设置 `HERMES_MIGRATE_OVERWRITE=true`。
 5. 执行：
    ```bash
    hermes doctor
@@ -150,7 +152,8 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 
 - **默认迁移模式：** `full`
 - **默认行为：** `--yes`
-- **不会默认加：** `--overwrite`
+- **新装 Hermes：** 会覆盖刚生成的默认模板，让 OpenClaw 配置顺利落进去
+- **已有 Hermes：** 默认不覆盖已有数据，除非设置 `HERMES_MIGRATE_OVERWRITE=true`
 - **始终优先：** 显式 `--source`
 - **没有执行：** `hermes doctor` 不算完成
 
@@ -199,6 +202,12 @@ OPENCLAW_DIR=/path/to/.openclaw bash -c "$(curl -fsSL https://raw.githubusercont
 ```bash
 HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
 HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
+```
+
+Hermes 官方安装器默认会以 `--skip-setup` 运行，因为本脚本会先迁移，再用 `hermes doctor` 做验收。如果你要覆盖安装参数，可以这样：
+
+```bash
+HERMES_INSTALL_ARGS="--skip-setup --branch main" bash ./install.sh
 ```
 
 如果连本仓库自己的 Raw 单文件入口也不稳定，可以直接改走 CDN 版本：

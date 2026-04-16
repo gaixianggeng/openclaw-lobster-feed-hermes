@@ -138,7 +138,7 @@ Why this matters:
 Official installer path:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -146,14 +146,17 @@ Built-in fallback behavior in this repo's installer:
 
 - first try GitHub Raw
 - if that fails, try jsDelivr automatically
+- pass `--skip-setup` by default so non-interactive one-liners do not fail at the Hermes setup wizard
 - operators can override the primary source with `HERMES_INSTALL_URL`
 - operators can append extra candidates with `HERMES_INSTALL_FALLBACK_URLS`
+- operators can override installer flags with `HERMES_INSTALL_ARGS`
 
 Example overrides:
 
 ```bash
 HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
 HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
+HERMES_INSTALL_ARGS="--skip-setup --branch main" bash ./install.sh
 ```
 
 If `hermes` is still not on `PATH`, refresh the shell and verify again:
@@ -185,6 +188,8 @@ Add `--overwrite` only when the operator explicitly authorizes replacing existin
 ```bash
 hermes claw migrate --source "$OPENCLAW_DIR" --preset full --overwrite --yes
 ```
+
+Exception: when this repository's installer just installed Hermes during the same run, it may add `--overwrite` automatically so the freshly generated Hermes template does not block OpenClaw model/provider settings. If Hermes already existed before the script started, keep the non-overwrite default unless `HERMES_MIGRATE_OVERWRITE=true` is explicitly set.
 
 ### Step 5 — validate
 

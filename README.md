@@ -133,10 +133,12 @@ The default flow is:
 1. verify `git` exists
 2. detect the OpenClaw directory
 3. install Hermes if it is missing
+   - the Hermes installer is invoked with `--skip-setup` by default so non-interactive one-liners do not stop at the setup wizard
 4. run:
    ```bash
    hermes claw migrate --source "$OPENCLAW_DIR" --preset full --yes
    ```
+   On a fresh Hermes install created by this script, migration automatically adds `--overwrite` so OpenClaw model/provider settings can replace the default Hermes template. If Hermes was already installed before the script started, the migration still does not overwrite existing Hermes data unless you set `HERMES_MIGRATE_OVERWRITE=true`.
 5. run:
    ```bash
    hermes doctor
@@ -150,7 +152,8 @@ This package intentionally chooses the fastest safe default for distribution:
 
 - **default migration mode:** `full`
 - **default behavior:** `--yes`
-- **does not default to:** `--overwrite`
+- **fresh Hermes install:** overwrite the newly created default template so OpenClaw settings can land cleanly
+- **existing Hermes install:** do not overwrite existing Hermes data unless `HERMES_MIGRATE_OVERWRITE=true`
 - **always prefers:** explicit `--source`
 - **does not claim success without:** `hermes doctor`
 
@@ -197,6 +200,12 @@ You can also steer the install source explicitly:
 ```bash
 HERMES_INSTALL_URL=https://your-approved-mirror.example/install.sh bash ./install.sh
 HERMES_INSTALL_FALLBACK_URLS="https://cdn.jsdelivr.net/gh/NousResearch/hermes-agent@main/scripts/install.sh" bash ./install.sh
+```
+
+The Hermes installer is called with `--skip-setup` by default because this script migrates first and validates with `hermes doctor` afterward. To override the installer flags:
+
+```bash
+HERMES_INSTALL_ARGS="--skip-setup --branch main" bash ./install.sh
 ```
 
 If you want the repository entrypoint itself to avoid GitHub Raw, use the CDN variant:
